@@ -19,6 +19,7 @@ import {
 import healthRoutes from "./routes/health.js";
 import recommendationRoutes from "./routes/recommendations.js";
 import chatRoutes from "./routes/chat.js";
+import monitoringRoutes from "./routes/monitoring.js";
 
 // Load environment variables
 dotenv.config();
@@ -44,7 +45,7 @@ app.use(securityMiddleware);
 // CORS configuration
 const corsOrigins = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(",").map((origin) => origin.trim())
-  : ["http://localhost:5173", "http://localhost:3000"];
+  :"http://localhost:3000";
 
 app.use(
   cors({
@@ -100,6 +101,7 @@ app.use("/api/health", healthRoutes);
 // API routes
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/chat", chatRoutes);
+  app.use("/api/monitoring", monitoringRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -111,6 +113,7 @@ app.get("/", (req, res) => {
       health: "/api/health",
       recommendations: "/api/recommendations",
       chat: "/api/chat",
+        monitoring: "/api/monitoring",
     },
     documentation: "See README.md for detailed API documentation",
   });

@@ -8,7 +8,7 @@ class LLMAdapter {
     // Groq API configuration
     this.groqApiKey = process.env.GROQ_API_KEY;
     this.groqBaseUrl = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
-    this.defaultModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+    this.defaultModel = process.env.GROQ_MODEL || 'openai/gpt-oss-20b';
     this.timeout = parseInt(process.env.REQUEST_TIMEOUT) || 30000;
     
     // Debug logging (remove in production)

@@ -36,7 +36,7 @@ router.get('/', asyncHandler(async (req, res) => {
     healthCheck.llm = {
       status: llmHealthy ? 'available' : 'unavailable',
       service: 'groq',
-      model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant'
+      model: process.env.GROQ_MODEL || 'openai/gpt-oss-20b'
     };
   } catch (error) {
     healthCheck.llm = {
@@ -45,11 +45,19 @@ router.get('/', asyncHandler(async (req, res) => {
     };
   }
 
-  // Overall health status
-  const isHealthy = healthCheck.database.status === 'connected' && 
-                   healthCheck.llm.status === 'available';
+  // The API can still serve disease detection and stored recommendations when
+  // the optional LLM provider is unavailable. Report that state as degraded
+  // instead of making clients interpret the entire backend as unavailable.
+  const isDatabaseHealthy = healthCheck.database.status === 'connected';
+  const isLlmHealthy = healthCheck.llm.status === 'available';
 
-  res.status(isHealthy ? 200 : 503).json(healthCheck);
+  healthCheck.status = !isDatabaseHealthy
+    ? 'unhealthy'
+    : isLlmHealthy
+      ? 'ok'
+      : 'degraded';
+
+  res.status(isDatabaseHealthy ? 200 : 503).json(healthCheck);
 }));
 
 // Detailed system information (dev only)
