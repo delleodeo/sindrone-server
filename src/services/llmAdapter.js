@@ -221,16 +221,19 @@ Remember: You help real Filipino farmers. Be accurate, safe, and responsible.`;
       'greening': 'Citrus Greening (HLB)'
     };
 
-    const diseaseName = diseaseNames[diseaseKey] || diseaseKey;
+    const diseaseName = context.displayName || diseaseNames[diseaseKey] || diseaseKey;
 
     return `
-Generate agricultural guidance for ${diseaseName} in dalandan/citrus crops.
+Generate agricultural guidance specifically for the detected ${context.category || 'citrus condition'} "${diseaseName}" in dalandan/citrus crops.
+The exact model class is "${context.modelClass || diseaseKey}". Do not substitute another disease or pest.
 ${context.severity ? `Detected severity: ${context.severity}` : ''}
 ${context.confidence ? `Model confidence: ${context.confidence}%` : ''}
 ${context.userContext ? `Additional context: ${context.userContext}` : ''}
+${context.request ? `Required response focus: ${context.request}` : ''}
 
 Provide a JSON response with this structure:
 {
+  "description": "Plain-language description of what this possible disease or pest is and the kind of citrus damage it may be associated with",
   "summary": "Brief 1-2 sentence overview using 'likely' or 'possible'",
   "symptoms": ["symptom1", "symptom2", "symptom3"],
   "causes": ["cause1", "cause2"],
@@ -241,6 +244,9 @@ Provide a JSON response with this structure:
 }
 
 RULES:
+- Every symptom, cause, treatment step, and prevention step must be relevant to ${diseaseName}; do not use generic citrus advice when class-specific guidance is possible.
+- For pests, describe feeding signs, where to scout, and pest-focused IPM. For diseases, describe characteristic symptoms, spread, sanitation, and disease-focused management.
+- For beneficial insects, spiders, honeybees, lacewings, ladybugs, wasps, and unknown/other classes, do not recommend pesticide treatment by default.
 - Use "likely" or "possible" - never claim certainty
 - NO exact chemical dosages or mixing ratios
 - Focus on IPM and sanitation first
@@ -250,7 +256,7 @@ RULES:
 
   // System prompt for recommendation generation
   getRecommendationSystemPrompt() {
-    return `You are DalandanCare Assistant generating structured disease recommendations.
+    return `You are DalandanCare Assistant generating structured disease and pest recommendations.
 
 SAFETY RULES:
 - Never provide exact chemical dosages or mixing ratios
@@ -258,6 +264,7 @@ SAFETY RULES:
 - Recommend consulting professionals for chemical specifics
 - Prioritize IPM and sanitation approaches
 - Include organic options when available
+- Make every section specific to the exact detected class supplied by the user
 
 Respond ONLY with valid JSON format as requested.`;
   }
@@ -285,6 +292,10 @@ Respond ONLY with valid JSON format as requested.`;
         throw new Error(`Missing required fields: ${missing.join(', ')}`);
       }
 
+      if (parsed.description && typeof parsed.description !== 'string') {
+        delete parsed.description;
+      }
+
       parsed.disclaimer = "Guidance only — confirm with a local agriculture technician/DA office for accurate diagnosis and treatment.";
 
       return parsed;
@@ -294,28 +305,8 @@ Respond ONLY with valid JSON format as requested.`;
         content: content.substring(0, 200),
         error: error.message 
       });
-      
-      return {
-        summary: "Based on the analysis, this may indicate a citrus health issue that requires further assessment.",
-        symptoms: ["Observe leaf discoloration, spots, or unusual growth patterns", "Check for lesions or abnormal textures", "Note any yellowing or wilting"],
-        causes: ["Various environmental factors", "Possible pathogenic infection"],
-        treatmentSteps: [
-          "Remove and dispose of severely affected leaves properly",
-          "Improve air circulation around the plant",
-          "Ensure proper watering (not too wet/dry)",
-          "Consult local DA office for specific treatment recommendations"
-        ],
-        preventionSteps: [
-          "Maintain proper plant spacing",
-          "Regular monitoring and inspection",
-          "Practice good sanitation (clean tools, remove debris)"
-        ],
-        whenToEscalate: [
-          "If symptoms spread rapidly to other plants",
-          "If conventional treatments show no improvement after 2 weeks"
-        ],
-        disclaimer: "Guidance only — confirm with a local agriculture technician/DA office for accurate diagnosis and treatment."
-      };
+
+      throw new Error(`Invalid structured recommendation from LLM: ${error.message}`);
     }
   }
 }

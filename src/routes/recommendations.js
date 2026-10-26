@@ -177,7 +177,24 @@ router.post('/generate',
   validateLLMRecommendation,
   handleValidationErrors,
   asyncHandler(async (req, res) => {
-    const { diseaseKey, context = {}, enhanceExisting = true } = req.body;
+    const {
+      diseaseKey,
+      context: rawContext = {},
+      enhanceExisting = true
+    } = req.body;
+    let context = rawContext;
+
+    if (typeof rawContext === 'string') {
+      try {
+        context = JSON.parse(rawContext);
+      } catch {
+        context = { userContext: rawContext };
+      }
+    }
+
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+      context = {};
+    }
     
     const normalizedKey = Recommendation.normalizeKey(diseaseKey);
     logger.info('Generating AI recommendation', { 

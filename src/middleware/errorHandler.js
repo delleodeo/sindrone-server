@@ -35,6 +35,11 @@ export const errorHandler = (err, req, res, next) => {
     error = { message, statusCode: 400 };
   }
 
+  // Multer upload errors that were not handled by the route.
+  if (err.name === 'MulterError' && err.code === 'LIMIT_FILE_SIZE') {
+    error = { message: 'Uploaded image is too large', statusCode: 413, code: 'IMAGE_TOO_LARGE' };
+  }
+
   // JWT errors
   if (err.name === 'JsonWebTokenError') {
     const message = 'Invalid token';
@@ -53,6 +58,8 @@ export const errorHandler = (err, req, res, next) => {
   // Don't expose error details in production
   const response = {
     error: message,
+    ...(error.code && { code: error.code }),
+    ...(error.retryAfter && { retryAfter: error.retryAfter }),
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
       details: error

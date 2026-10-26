@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "seed": "node src/services/seedData.js"
+    "seed": "node src/services/seedData.js",
+    "test": "node --test"
   },
   "dependencies": {
     "compression": "^1.7.4",

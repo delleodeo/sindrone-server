@@ -6,6 +6,7 @@ import compression from "compression";
 import morgan from "morgan";
 import dotenv from "dotenv";
 import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./config/database.js";
 import { logger } from "./utils/logger.js";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
@@ -20,15 +21,18 @@ import healthRoutes from "./routes/health.js";
 import recommendationRoutes from "./routes/recommendations.js";
 import chatRoutes from "./routes/chat.js";
 import monitoringRoutes from "./routes/monitoring.js";
+import detectionRoutes from "./routes/detection.js";
 
 // Load environment variables
-dotenv.config();
+const serverDirectory = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(serverDirectory, "../.env") });
 
 // Log environment status (remove in production)
 logger.info('Environment variables loaded', {
   port: process.env.PORT,
   mongoUri: process.env.MONGODB_URI ? 'SET' : 'NOT_SET',
   groqApiKey: process.env.GROQ_API_KEY ? 'SET' : 'NOT_SET',
+  roboflowApiKey: process.env.ROBOFLOW_API_KEY ? 'SET' : 'NOT_SET',
   groqModel: process.env.GROQ_MODEL,
   corsOrigins: process.env.CORS_ORIGINS
 });
@@ -101,7 +105,8 @@ app.use("/api/health", healthRoutes);
 // API routes
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/chat", chatRoutes);
-  app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/monitoring", monitoringRoutes);
+app.use("/api/detection", detectionRoutes);
 
 // Root endpoint
 app.get("/", (req, res) => {
@@ -114,6 +119,7 @@ app.get("/", (req, res) => {
       recommendations: "/api/recommendations",
       chat: "/api/chat",
         monitoring: "/api/monitoring",
+        detection: "/api/detection",
     },
     documentation: "See README.md for detailed API documentation",
   });
